@@ -14,6 +14,7 @@ import android.graphics.Point;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 public class WzqView extends View {
 
@@ -34,12 +35,17 @@ public class WzqView extends View {
     private boolean mIsWhite = true;
     private List<Point> mWhiteArray = new ArrayList<Point>();
     private List<Point> mBlackArray = new ArrayList<Point>();
+    private Point mNowPoint = null;
+
+    private boolean mIsGramOver = false;
+    private boolean mIsWhiteWin;
+    private static int MAX_PIECE = 5;
 
     public WzqView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setBackgroundColor(0x44ff0000);
         init();
-        
+
     }
 
     /*
@@ -55,6 +61,8 @@ public class WzqView extends View {
 
         mWhitePiece = BitmapFactory.decodeResource(getResources(), R.drawable.white);
         mBlackPiece = BitmapFactory.decodeResource(getResources(), R.drawable.black);
+
+        mIsGramOver = false;
     }
 
     @Override
@@ -91,6 +99,137 @@ public class WzqView extends View {
         super.onDraw(canvas);
         drawBoard(canvas);
         drawPieces(canvas);
+        checkGramOver();
+    }
+
+    private void checkGramOver() {
+        if (mIsWhite) {
+            mIsGramOver = checkWhoWin(mBlackArray);
+        } else {
+            mIsGramOver = checkWhoWin(mWhiteArray);
+        }
+        if (mIsGramOver) {
+            Toast.makeText(getContext(), mIsWhiteWin ? "白棋赢" : "黑棋赢", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean checkWhoWin(List<Point> mPieceArray) {
+        boolean isEnd;
+        if (mNowPoint != null) {
+            isEnd = checkHorizontal(mPieceArray);
+            isEnd = checkVertical(mPieceArray);
+            isEnd = checkLeftSlant(mPieceArray);
+            isEnd = checkRightSlant(mPieceArray);
+        }
+        return false;
+    }
+
+    private boolean checkRightSlant(List<Point> mPieceArray) {
+        int count = 1;
+        boolean before, after;
+        before = mPieceArray.contains(new Point(mNowPoint.x, mNowPoint.y));
+        after = before;
+        for (int i = 1; i < MAX_PIECE; i++) {
+            if (!before && !after) {
+                break;
+            }
+            if (before) {
+                before = mPieceArray.contains(new Point(mNowPoint.x - i, mNowPoint.y + i));
+                if (before)
+                    count++;
+            }
+            if (after) {
+                after = mPieceArray.contains(new Point(mNowPoint.x + i, mNowPoint.y - i));
+                if (after)
+                    count++;
+            }
+        }
+        if (count >= MAX_PIECE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean checkLeftSlant(List<Point> mPieceArray) {
+        int count = 1;
+        boolean before, after;
+        before = mPieceArray.contains(new Point(mNowPoint.x, mNowPoint.y));
+        after = before;
+        for (int i = 1; i < MAX_PIECE; i++) {
+            if (!before && !after) {
+                break;
+            }
+            if (before) {
+                before = mPieceArray.contains(new Point(mNowPoint.x - i, mNowPoint.y - i));
+                if (before)
+                    count++;
+            }
+            if (after) {
+                after = mPieceArray.contains(new Point(mNowPoint.x + i, mNowPoint.y + i));
+                if (after)
+                    count++;
+            }
+        }
+        if (count >= MAX_PIECE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean checkVertical(List<Point> mPieceArray) {
+        int count = 1;
+        boolean before, after;
+        before = mPieceArray.contains(new Point(mNowPoint.x, mNowPoint.y));
+        after = before;
+        for (int i = 1; i < MAX_PIECE; i++) {
+            if (!before && !after) {
+                break;
+            }
+            if (before) {
+                before = mPieceArray.contains(new Point(mNowPoint.x, mNowPoint.y - i));
+                if (before)
+                    count++;
+            }
+            if (after) {
+                after = mPieceArray.contains(new Point(mNowPoint.x, mNowPoint.y + i));
+                if (after)
+                    count++;
+            }
+        }
+        if (count >= MAX_PIECE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean checkHorizontal(List<Point> mPieceArray) {
+        int count = 1;
+        boolean before, after;
+        before = mPieceArray.contains(new Point(mNowPoint.x, mNowPoint.y));
+        after = before;
+        for (int i = 1; i < MAX_PIECE; i++) {
+            if (!before && !after) {
+                break;
+            }
+            if (before) {
+                before = mPieceArray.contains(new Point(mNowPoint.x - i, mNowPoint.y));
+                if (before)
+                    count++;
+            }
+            if (after) {
+                after = mPieceArray.contains(new Point(mNowPoint.x + i, mNowPoint.y));
+                if (after)
+                    count++;
+            }
+        }
+        if (count >= MAX_PIECE) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void drawPieces(Canvas canvas) {
@@ -111,17 +250,21 @@ public class WzqView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         if (action == MotionEvent.ACTION_UP) {
+            if (mIsGramOver) {
+                return false;
+            }
             int x = (int) event.getX();
             int y = (int) event.getY();
             Point p = getValidPoint(x, y);
+
             if (mWhiteArray.contains(p) || mBlackArray.contains(p)) {
                 return false;
             }
-
+            mNowPoint = p;
             if (mIsWhite) {
-                mWhiteArray.add(p);
+                mWhiteArray.add(mNowPoint);
             } else {
-                mBlackArray.add(p);
+                mBlackArray.add(mNowPoint);
             }
             invalidate();
             mIsWhite = !mIsWhite;
