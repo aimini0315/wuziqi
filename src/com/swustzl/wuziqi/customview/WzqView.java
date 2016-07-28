@@ -37,7 +37,7 @@ public class WzqView extends View {
     private List<Point> mBlackArray = new ArrayList<Point>();
     private Point mNowPoint = null;
 
-    private boolean mIsGramOver = false;
+    private boolean mIsGameOver = false;
     private boolean mIsWhiteWin;
     private static int MAX_PIECE = 5;
 
@@ -62,7 +62,7 @@ public class WzqView extends View {
         mWhitePiece = BitmapFactory.decodeResource(getResources(), R.drawable.white);
         mBlackPiece = BitmapFactory.decodeResource(getResources(), R.drawable.black);
 
-        mIsGramOver = false;
+        mIsGameOver = false;
     }
 
     @Override
@@ -104,11 +104,12 @@ public class WzqView extends View {
 
     private void checkGramOver() {
         if (mIsWhite) {
-            mIsGramOver = checkWhoWin(mBlackArray);
+            mIsGameOver = checkWhoWin(mBlackArray);
         } else {
-            mIsGramOver = checkWhoWin(mWhiteArray);
+            mIsGameOver = checkWhoWin(mWhiteArray);
         }
-        if (mIsGramOver) {
+        if (mIsGameOver) {
+            mIsWhiteWin = mIsWhite ? false : true;
             Toast.makeText(getContext(), mIsWhiteWin ? "白棋赢" : "黑棋赢", Toast.LENGTH_SHORT).show();
         }
     }
@@ -117,9 +118,17 @@ public class WzqView extends View {
         boolean isEnd;
         if (mNowPoint != null) {
             isEnd = checkHorizontal(mPieceArray);
+            if (isEnd)
+                return true;
             isEnd = checkVertical(mPieceArray);
+            if (isEnd)
+                return true;
             isEnd = checkLeftSlant(mPieceArray);
+            if (isEnd)
+                return true;
             isEnd = checkRightSlant(mPieceArray);
+            if (isEnd)
+                return true;
         }
         return false;
     }
@@ -250,7 +259,7 @@ public class WzqView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         if (action == MotionEvent.ACTION_UP) {
-            if (mIsGramOver) {
+            if (mIsGameOver) {
                 return false;
             }
             int x = (int) event.getX();
